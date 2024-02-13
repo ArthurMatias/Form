@@ -1,6 +1,6 @@
 import { useState, FormEvent } from "react";
 import { User } from "../types/User";
-import { validate } from "../utils/validade";
+import { validate } from "../utils/validate";
 
 const Form = () => {
 
@@ -9,12 +9,13 @@ const Form = () => {
     const [email, setEmail] = useState("");
     const [agree, setAgree] = useState(false);//False para começar desmarcado e o user ter a opção de marcar
 
-    const [erros,setErros] = useState<User | null>(null); //Foi tipado, já que os dados começam como nulo e só depois recebe as infos do user
+    const [errors,setErrors] = useState<User | null>(null); //Foi tipado, já que os dados começam como nulo e só depois recebe as infos do user
     
-    const handlesubmit = (e: FormEvent) => { //"e" foi typado com o FormEvent para usar ele
-        e.preventDefault(); //Prevenir o comportamento padrão de envio do formulário
+    const handleSubmit = (e:FormEvent) => { //"e" foi typado com o FormEvent para usar ele
         
-        setErros(null);
+        e.preventDefault(); //Prevenir o comportamento padrão de envio do formulário
+
+        setErrors(null);
         
         const data: User = {
             name,
@@ -22,44 +23,60 @@ const Form = () => {
             agree,
         };
 
-        const validateErros = validate(data);
+        let validateErrors: User | null = null;
 
-        console.log(data, validateErros)
+        try {
 
-        if (Object.keys(validateErros).length > 0){
-            
-            setErros(validateErros);
+            validateErrors = validate(data);
 
-            alert("há algum erro!");
+        }catch (error){
 
-            return
+            console.error("Erro durante a validação:", error); // Lida com o erro durante a validação, se necessário.
         }
 
-        alert("Obrigado por se inscrever!");
+        if (validateErrors && Object.keys(validateErrors).length > 0){
+
+            setErrors(validateErrors);
+            
+            return;
+        }
+
+        setName("");
+        setEmail("");
+        setAgree(false);
+
+        alert("Inscrito com Sucesso!");
+            
     };
 
-    return <form className="flex flex-col gap-3" onSubmit={handlesubmit}>
+    return <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
 
         <div className="flex flex-col">
             <label  className="text-sm" htmlFor="name">Nome</label>
-            <input type="text" placeholder="Digite seu nome:" value={name} onChange={(e) => setName(e.target.value)} className="rounded-lg px-2 py-2 text-sm placeholder:text-sm placeholder: text-stone-600"/>
+            <input type="text" placeholder="Digite seu nome:" className="rounded-lg px-2 py-2 text-sm placeholder:text-sm placeholder: text-stone-600" value={name} onChange={(e) => setName(e.target.value)}/>
         
-            {erros?.name &&(
-                <small className="text-xs text-red-500 mt-1">{erros?.name}</small>)}{/*O operador lógico && é usado para condicionalmente renderizar o conteúdo à direita somente se a expressão à esquerda for avaliada como verdadeira.*/}
+            {errors?.name &&(
+                <small className="text-xs text-red-500 mt-1">{errors?.name}</small>)}{/*O operador lógico && é usado para condicionalmente renderizar o conteúdo à direita somente se a expressão à esquerda for avaliada como verdadeira.*/}
 
         </div> 
 
         <div className="flex flex-col">
             <label  className="text-sm" htmlFor="email">E-mail</label>
-            <input type="email" placeholder="Insira seu E-mail:" value={email} onChange={(e) => setEmail(e.target.value)} className="rounded-lg px-2 py-2 text-sm placeholder:text-sm placeholder: text-stone-600"/>
+            <input type="email" placeholder="Insira seu E-mail:" className="rounded-lg px-2 py-2 text-sm placeholder:text-sm placeholder: text-stone-600" value={email} onChange={(e) => setEmail(e.target.value)}/>
+        
+            {errors?.email &&(
+                <small className="text-xs text-red-500 mt-1">{errors?.email}</small>)}  
+        
         </div>
 
         <div className="flex flex-col">
             <a className="text-xs underline mb-2"> Leia os Termos</a>
             <div className="flex items-center gap-2">
-                <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.value)}/>
+                <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)}/>
                 <label htmlFor="agree" className="text-sm" >Concordo com os termos</label>
             </div>
+            {errors?.agree &&(
+                <small className="text-xs text-red-500 mt-1">{errors?.agree}</small>)}
         </div>
 
         <button type="submit" className="bg-slate-900 hover:bg-slate-700 font-medium text-lg px-2 py-1 rounded-lg text-white">Cadastrar</button>
